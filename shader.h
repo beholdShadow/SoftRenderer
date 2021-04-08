@@ -15,6 +15,7 @@ struct UniformBlock {
 	vec3  lightDir;
 	sample2D diffuseTexture;
 	sample2D normalTexture;
+	sample2D tNormalTexture;
 };
 
 class RendererUtil {
@@ -92,5 +93,6 @@ private:
 	uniform vec3				lightDir;
 	uniform sample2D			diffuseTexture;
 	uniform sample2D			normalTexture;
+	uniform sample2D			tNormalTexture;
 };
 

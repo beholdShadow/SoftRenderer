@@ -197,7 +197,7 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 //	}
 //}
 
-void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, float* zbuffer, TGAImage& image) {
+void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3, 3>& TBN, float* zbuffer, TGAImage& image) {
 	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y)
 		return;
 
@@ -231,24 +231,17 @@ void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, float*
 			mat<3, 3> normal;
 			for (int i = 0; i < 3; i++) {
 				z[0][i] = vertPts[i][2];
-				sample_uv[0][i] = uvPts[i].u;
-				sample_uv[1][i] = uvPts[i].v;
-				normal[0][i] = normalPts[i].x;
-				normal[1][i] = normalPts[i].y;
-				normal[2][i] = normalPts[i].z;
+				sample_uv.set_col(i, uvPts[i]);
+				normal.set_col(i, normalPts[i]);
 			}
 			P.z = (z * bc_screen)[0];
 			uvCoord = sample_uv * bc_screen;
 			normalCoord = normal * bc_screen;
-
-			mat<3, 3> TBN;
-			mat<2, 2> deltaUV((uvPts[2] - uvPts[0]).x, (uvPts[2] - uvPts[0]).y
-								  (uvPts[1] - uvPts[0]).x, (uvPts[1] - uvPts[0]).y);
-			vec3 tangent = 
-			//frag shader 
-			if (shader->fragment(uvCoord, normalCoord, fragColor)) {
-			}
-				//continue;
+			normalCoord.normalize();
+			TBN[0] = (TBN[0] - normalCoord *(normalCoord * TBN[0])).normalize();
+			TBN[1] = vec3::cross(normalCoord, TBN[0]).normalize();
+			TBN[2] = normalCoord;
+			shader->fragment(uvCoord, normalCoord, TBN, fragColor);
 
 			//post process
 			if (zbuffer[int(P.x + P.y * width)] < P.z) {

@@ -66,6 +66,11 @@ struct TGAColor {
 
 		return *this;
 	}
+
+	unsigned char operator [](int idx) {
+		return raw[idx];
+	}
+
 };
 
 

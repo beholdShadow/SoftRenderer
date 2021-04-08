@@ -14,6 +14,7 @@ void ModelShader::setUniform(UniformBlock& block) {
 	lightDir = block.lightDir;
 	diffuseTexture = block.diffuseTexture;
 	normalTexture = block.normalTexture;
+	tNormalTexture = block.tNormalTexture;
 }
 
 //vec3 ModelShader::vertex(vec3 position, vec3 normal,
@@ -52,15 +53,24 @@ bool ModelShader::fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) {
 }
 
 bool ModelShader::fragment(vec2 uvCoord, vec3 normal, mat<3, 3> TBN, TGAColor& fragColor) {
-	TGAColor nColor = normalTexture->get(diffuseTexture->get_width() * uvCoord.u,
-		diffuseTexture->get_height() * uvCoord.v);
-	vec3 n = vec3(nColor.r, nColor.g, nColor.a) / 255 * 2 - 1.0;
-	n = TBN * n.normalize();
+	TGAColor nColor = normalTexture->get(normalTexture->get_width() * uvCoord.u,
+		normalTexture->get_height() * uvCoord.v);
+	TGAColor tnColor = tNormalTexture->get(tNormalTexture->get_width() * uvCoord.u,
+		tNormalTexture->get_height() * uvCoord.v);
 
-	float intensity = std::max((double)0.0f, n.normalize() * (lightDir * (-1.0f)).normalize());
+	vec3 worldNormal;
+	vec3 tangentNormal;
+	for (int i = 0; i < 3; i++) {
+		worldNormal[i] = nColor[i] / 255. * 2 - 1;
+		tangentNormal[2-i] = tnColor[i] / 255. * 2 - 1;
+	}
+	
+	tangentNormal = TBN * tangentNormal.normalize();
+
+	float diff = std::max(0.0, worldNormal.normalize() * (lightDir * (-1.0f)).normalize());
 
 	fragColor = diffuseTexture->get(diffuseTexture->get_width() * uvCoord.u,
-		diffuseTexture->get_height() * uvCoord.v) * intensity;
+		diffuseTexture->get_height() * uvCoord.v) * diff;
 
 	for (int i = 0; i < 3; i++) {
 		fragColor.raw[i] = std::min(fragColor.raw[i], (unsigned char)255);

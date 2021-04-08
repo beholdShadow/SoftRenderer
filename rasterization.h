@@ -29,6 +29,7 @@ public:
 	//			float* zbuffer, 
 	//			TGAImage& image, float* intensityPt);
 	void triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, 
+				mat<3, 3>& TBN,
 				float* zbuffer, TGAImage& image);
 
 protected:

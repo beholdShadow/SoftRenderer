@@ -24,6 +24,7 @@ public:
 
 	TGAImage* getDiffuseTexture();
 	TGAImage* getNormalTexture();
+	TGAImage* getTangentNormalTexture();
 
 private:
 	std::vector<vec3> verts;
@@ -37,4 +38,5 @@ private:
 
 	TGAImage diffuseTexture;
 	TGAImage normalTexture;
+	TGAImage tNormalTexture;
 };
