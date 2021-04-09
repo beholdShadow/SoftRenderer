@@ -80,7 +80,8 @@ void RendererController::run() {
 		mat<2, 3> TB = deltaUV * deltaPos;
 		
 		mat<3, 3> TBN = mat<3, 3>{ TB[0].normalize(), TB[1].normalize(), vec3::cross(TBN[0], TBN[1]).normalize() };
-		_rasterize->triangle(clip_coords, uv_coords, normal_coords, TBN, _zbuffer, _outFrame);
+		double result = TBN[0] * TBN[1];
+		_rasterize->triangle(vert_coords, clip_coords, uv_coords, normal_coords, TBN, _zbuffer, _outFrame);
 	}
 }
 

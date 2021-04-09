@@ -64,10 +64,10 @@ bool ModelShader::fragment(vec2 uvCoord, vec3 normal, mat<3, 3> TBN, TGAColor& f
 		worldNormal[i] = nColor[i] / 255. * 2 - 1;
 		tangentNormal[2-i] = tnColor[i] / 255. * 2 - 1;
 	}
-	
+	worldNormal.normalize();
 	tangentNormal = TBN * tangentNormal.normalize();
 
-	float diff = std::max(0.0, worldNormal.normalize() * (lightDir * (-1.0f)).normalize());
+	float diff = std::max(0.0, tangentNormal.normalize() * (lightDir * (-1.0f)).normalize());
 
 	fragColor = diffuseTexture->get(diffuseTexture->get_width() * uvCoord.u,
 		diffuseTexture->get_height() * uvCoord.v) * diff;

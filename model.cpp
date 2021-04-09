@@ -61,7 +61,8 @@ Model::Model(std::string filename) : verts(), vertFaces() {
 	normalTexture.read_tga_file(normalMapName.c_str());
 	normalTexture.flip_vertically();
 
-	tNormalTexture.read_tga_file(tNormalMapName.c_str());
+	if(!tNormalTexture.read_tga_file(tNormalMapName.c_str()))
+		assert(0);
 	tNormalTexture.flip_vertically();
 	std::cerr << "# v# " << verts.size() << " f# " << vertFaces.size() << std::endl;
 }

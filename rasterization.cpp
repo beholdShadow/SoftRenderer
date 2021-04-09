@@ -197,7 +197,7 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 //	}
 //}
 
-void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3, 3>& TBN, float* zbuffer, TGAImage& image) {
+void Rasterization::triangle(vec3* worldPts, vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3, 3>& TBN, float* zbuffer, TGAImage& image) {
 	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y)
 		return;
 
@@ -225,7 +225,7 @@ void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3,
 
 			P.z = 0;
 			vec2 uvCoord;
-			vec3 normalCoord;
+			vec3 bn;
 			mat<1, 3> z;
 			mat<2, 3> sample_uv;
 			mat<3, 3> normal;
@@ -236,12 +236,20 @@ void Rasterization::triangle(vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3,
 			}
 			P.z = (z * bc_screen)[0];
 			uvCoord = sample_uv * bc_screen;
-			normalCoord = normal * bc_screen;
-			normalCoord.normalize();
-			TBN[0] = (TBN[0] - normalCoord *(normalCoord * TBN[0])).normalize();
-			TBN[1] = vec3::cross(normalCoord, TBN[0]).normalize();
-			TBN[2] = normalCoord;
-			shader->fragment(uvCoord, normalCoord, TBN, fragColor);
+			bn = normal * bc_screen;
+
+			bn.normalize();
+			TBN[0] = (TBN[0] - bn *(bn * TBN[0])).normalize();
+			TBN[1] = vec3::cross(bn, TBN[0]).normalize();
+			TBN[2] = bn;
+
+			mat<3, 3> AI = mat<3, 3>{ {worldPts[1] - worldPts[0], worldPts[2] - worldPts[0], bn} }.invert();
+			vec3 i = AI * vec3((uvPts[1] - uvPts[0]).u, (uvPts[2] - uvPts[0]).u, 0);
+			vec3 j = AI * vec3((uvPts[1] - uvPts[0]).v, (uvPts[2] - uvPts[0]).v, 0);
+
+			mat<3, 3> B = mat<3, 3>{ {i.normalize(), j.normalize(), bn} }.transpose();
+
+			shader->fragment(uvCoord, bn, B, fragColor);
 
 			//post process
 			if (zbuffer[int(P.x + P.y * width)] < P.z) {
