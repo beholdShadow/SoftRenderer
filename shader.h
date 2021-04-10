@@ -13,9 +13,11 @@ struct UniformBlock {
 	mat<4,4> view;
 	mat<4, 4> projection;
 	vec3  lightDir;
+	vec3  viewPos;
 	sample2D diffuseTexture;
 	sample2D normalTexture;
 	sample2D tNormalTexture;
+	sample2D specTexture;
 };
 
 class RendererUtil {
@@ -70,7 +72,7 @@ public:
 	virtual vec3 vertex(vec3 position) = 0;
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) = 0;
 
-	virtual bool fragment(vec2 uvCoord, vec3 normal, mat<3, 3> TBN, TGAColor& fragColor) = 0;
+	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) = 0;
 };
 
 class ModelShader:public IShader
@@ -84,15 +86,17 @@ public:
 
 	virtual vec3 vertex(vec3 position) override;
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) override;
-	virtual bool fragment(vec2 uvCoord, vec3 normal, mat<3, 3> TBN, TGAColor& fragColor) override;
+	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) override;
 
 private:
 	uniform mat<4,4>			model;
 	uniform mat<4,4>			view;
 	uniform mat<4,4>			projection;
-	uniform vec3				lightDir;
 	uniform sample2D			diffuseTexture;
 	uniform sample2D			normalTexture;
 	uniform sample2D			tNormalTexture;
+	uniform sample2D			specTexture;
+	uniform vec3				lightDir;
+	uniform vec3				viewPos;
 };
 

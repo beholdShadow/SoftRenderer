@@ -6,9 +6,6 @@
 
 Model::Model(std::string filename) : verts(), vertFaces() {
 	std::string objName = filename +  ".obj";
-	std::string diffuseName = filename + "_diffuse.tga";
-	std::string normalMapName = filename + "_nm.tga";
-	std::string tNormalMapName = filename + "_nm_tangent.tga";
 	std::ifstream in;
 	in.open(objName, std::ifstream::in);
 	if (in.fail()) return;
@@ -55,15 +52,23 @@ Model::Model(std::string filename) : verts(), vertFaces() {
 		}
 	}
 
+	std::string diffuseName = filename + "_diffuse.tga";
 	diffuseTexture.read_tga_file(diffuseName.c_str());
 	diffuseTexture.flip_vertically();
 
+	std::string normalMapName = filename + "_nm.tga";
 	normalTexture.read_tga_file(normalMapName.c_str());
 	normalTexture.flip_vertically();
-
+	
+	std::string tNormalMapName = filename + "_nm_tangent.tga";
 	if(!tNormalTexture.read_tga_file(tNormalMapName.c_str()))
 		assert(0);
 	tNormalTexture.flip_vertically();
+
+	std::string specMapName = filename + "_spec.tga";
+	if (!specTexture.read_tga_file(specMapName.c_str()))
+		assert(0);
+	specTexture.flip_vertically();
 	std::cerr << "# v# " << verts.size() << " f# " << vertFaces.size() << std::endl;
 }
 
@@ -120,4 +125,8 @@ TGAImage* Model::getNormalTexture() {
 
 TGAImage* Model::getTangentNormalTexture() {
 	return &tNormalTexture;
+}
+
+TGAImage* Model::getSpecularTexture() {
+	return &specTexture;
 }

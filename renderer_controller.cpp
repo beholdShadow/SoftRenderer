@@ -41,7 +41,9 @@ void RendererController::run() {
 	block.diffuseTexture = _model->getDiffuseTexture();
 	block.normalTexture = _model->getNormalTexture();
 	block.tNormalTexture = _model->getTangentNormalTexture();
+	block.specTexture = _model->getSpecularTexture();
 	block.lightDir = _light_dir;
+	block.viewPos = _camera;
 
 	_rasterize->viewPort(0, 0, _width, _height);
 
@@ -56,8 +58,9 @@ void RendererController::run() {
 		vec2 uv_coords[3];
 		vec3 normal_coords[3];
 		for (int j = 0; j < 3; j++) {
+			vert_coords[j] = proj<3>(block.model * embed<4>(_model->vert(vertFace[j]), 1.0));
 			vert_coords[j] = _model->vert(vertFace[j]);
-			clip_coords[j] = _shader->vertex(vert_coords[j]);
+			clip_coords[j] = _shader->vertex(_model->vert(vertFace[j]));
 			uv_coords[j] = _model->uvert(uvFace[j]);
 			normal_coords[j] = _model->normalvert(normalFace[j]); 
 		}
@@ -66,16 +69,11 @@ void RendererController::run() {
 		//double deltaV1 = (uv_coords[1] - uv_coords[0]).v;
 		//double deltaU2 = (uv_coords[2] - uv_coords[0]).u;
 		//double deltaV2 = (uv_coords[2] - uv_coords[0]).v;
-		//mat<2, 2> deltaUV = mat<2, 2>{ vec<2>(deltaV2, -deltaV1), vec<2>(-deltaU2, deltaU1) } * (1/(deltaU1 * deltaV2 - deltaU2 * deltaV1));
+		//mat<2, 2> deltaUV1 = mat<2, 2>{ vec<2>(deltaV2, -deltaV1), vec<2>(-deltaU2, deltaU1) } * (1/(deltaU1 * deltaV2 - deltaU2 * deltaV1));
 		mat<2, 2> deltaUV = mat<2, 2>{ uv_coords[1] - uv_coords[0], uv_coords[2] - uv_coords[0] }.invert();
+
+		//mat<2, 2> deltaUV = mat<2, 2>{ vec2(deltaU1, deltaU2), vec2(deltaV1, deltaV2) }.invert();
 		mat<2, 3> deltaPos = mat<2, 3>{ vert_coords[1] - vert_coords[0], vert_coords[2] - vert_coords[0] };
-
-		//deltaUV[0] = { uv_coords[2] - uv_coords[0] };
-		//deltaUV[1] = { uv_coords[1] - uv_coords[0] };
-		//deltaUV.invert();
-
-		//deltaPos[0] = { vert_coords[2] - vert_coords[0] };
-		//deltaPos[1] = { vert_coords[1] - vert_coords[0] };
 
 		mat<2, 3> TB = deltaUV * deltaPos;
 		

@@ -67,6 +67,15 @@ struct TGAColor {
 		return *this;
 	}
 
+	TGAColor& operator +(const TGAColor& c) {
+		b += c.b;
+		g += c.g;
+		r += c.r;
+		a += c.a;
+
+		return *this;
+
+	}
 	unsigned char operator [](int idx) {
 		return raw[idx];
 	}

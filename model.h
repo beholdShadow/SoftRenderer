@@ -25,7 +25,7 @@ public:
 	TGAImage* getDiffuseTexture();
 	TGAImage* getNormalTexture();
 	TGAImage* getTangentNormalTexture();
-
+	TGAImage* getSpecularTexture();
 private:
 	std::vector<vec3> verts;
 	std::vector<std::vector<int> > vertFaces;
@@ -39,4 +39,5 @@ private:
 	TGAImage diffuseTexture;
 	TGAImage normalTexture;
 	TGAImage tNormalTexture;
+	TGAImage specTexture;
 };

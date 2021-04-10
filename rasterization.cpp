@@ -217,39 +217,49 @@ void Rasterization::triangle(vec3* worldPts, vec3* vertPts, vec2* uvPts, vec3* n
 
 	vec3 P;
 	TGAColor fragColor;
+	mat<1, 3> z;
+	mat<3, 3> world;
+	mat<2, 3> sample_uv;
+	mat<3, 3> normal;
+	vec3 worldCoord;
+	vec2 uvCoord;
+	vec3 bn;
+
+	for (int i = 0; i < 3; i++) {
+		z[0][i] = vertPts[i][2];
+		world.set_col(i, worldPts[i]);
+		sample_uv.set_col(i, uvPts[i]);
+		normal.set_col(i, normalPts[i]);
+	}
+
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
 			vec3 bc_screen = baryCentric(vertPts, P);
 			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0)
 				continue;
 
-			P.z = 0;
-			vec2 uvCoord;
-			vec3 bn;
-			mat<1, 3> z;
-			mat<2, 3> sample_uv;
-			mat<3, 3> normal;
-			for (int i = 0; i < 3; i++) {
-				z[0][i] = vertPts[i][2];
-				sample_uv.set_col(i, uvPts[i]);
-				normal.set_col(i, normalPts[i]);
-			}
 			P.z = (z * bc_screen)[0];
+			worldCoord = world * bc_screen;
 			uvCoord = sample_uv * bc_screen;
 			bn = normal * bc_screen;
 
 			bn.normalize();
-			TBN[0] = (TBN[0] - bn *(bn * TBN[0])).normalize();
+			TBN[0] = (TBN[0] - bn * (bn * TBN[0])).normalize();
 			TBN[1] = vec3::cross(bn, TBN[0]).normalize();
 			TBN[2] = bn;
+			TBN.transpose();
 
 			mat<3, 3> AI = mat<3, 3>{ {worldPts[1] - worldPts[0], worldPts[2] - worldPts[0], bn} }.invert();
 			vec3 i = AI * vec3((uvPts[1] - uvPts[0]).u, (uvPts[2] - uvPts[0]).u, 0);
 			vec3 j = AI * vec3((uvPts[1] - uvPts[0]).v, (uvPts[2] - uvPts[0]).v, 0);
+			//vec3 i = AI * vec3((uvPts[1] - uvPts[0]).u, (uvPts[1] - uvPts[0]).v, 0);
+			//vec3 j = AI * vec3((uvPts[2] - uvPts[0]).u, (uvPts[2] - uvPts[0]).v, 0);
 
 			mat<3, 3> B = mat<3, 3>{ {i.normalize(), j.normalize(), bn} }.transpose();
 
-			shader->fragment(uvCoord, bn, B, fragColor);
+			bool discard = shader->fragment(worldCoord, uvCoord, B, fragColor);
+			if(discard)
+				continue;
 
 			//post process
 			if (zbuffer[int(P.x + P.y * width)] < P.z) {

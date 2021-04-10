@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	_outFrame.flip_vertically(); // to place the origin in the bottom left corner of the image 
 	_outFrame.write_tga_file("framebuffer.tga");
 
-	getchar();
+	//getchar();
 
 	return 0;
 
