@@ -255,9 +255,9 @@ void Rasterization::triangle(vec4* clipPts, float* shadowBuffer, TGAImage& depth
 			vec3 bc_clip = vec3(bc_screen.x / clipPts[0][3], bc_screen.y / clipPts[1][3], bc_screen.z / clipPts[2][3]);
 			bc_clip = bc_clip / (bc_clip.x + bc_clip.y + bc_clip.z);
 
-			P.z = (zMat * bc_screen)[0];
+			P.z = (zMat * bc_screen)[0] * 0.5 + 0.5;
 
-			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || shadowBuffer[int(P.x + P.y * width)] < P.z)
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || shadowBuffer[int(P.x + P.y * width)] < P.z * 2000)
 				continue;
 
 			bool discard = depthShader->fragment();
@@ -266,8 +266,8 @@ void Rasterization::triangle(vec4* clipPts, float* shadowBuffer, TGAImage& depth
 
 			//std::cerr << P.x <<" "<< P.y  <<" " << P.z << "\n";
 
-			shadowBuffer[int(P.x + P.y * width)] = P.z;
-			int depth = (P.z + 1.0) * 0.5 * 255;
+			shadowBuffer[int(P.x + P.y * width)] = P.z * 2000;
+			int depth = P.z * 255;
 			depthTga.set(P.x, P.y, TGAColor(depth, depth, depth, depth));
 		}
 	}

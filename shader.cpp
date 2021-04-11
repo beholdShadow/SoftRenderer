@@ -63,7 +63,7 @@ bool ModelShader::fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor
 	//float shadowFactor = 1.0f;
 	float shadowFactor = .3 + .7 * (1.0 -calculateShadow(lightSpace * embed<4>(fragCoord, 1.0f)));
 
-	float ambient = 5 / 255.0;
+	float ambient = 1 / 255.0;
 
 	double diff = std::max(0.0, tangentNormal * lightDir);
 
@@ -72,9 +72,9 @@ bool ModelShader::fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor
 	vec3 halfway = (viewDir + lightDir).normalize();
 
 	//double spec = pow(std::max(viewDir*reflectDir, 0.0), 5 + specColor[0] * 255);
-	double spec = pow(std::max(halfway * tangentNormal, 0.0), 5 + specColor.r * 255);
+	double spec = pow(std::max(halfway * tangentNormal, 0.0), 2 + specColor.r * 255);
 
-	vec3 vfragColor = diffColor * (ambient + shadowFactor * (1.2 * diff + 0.6 * spec))  + glowColor * 10;
+	vec3 vfragColor = diffColor * (ambient + shadowFactor * (1.0 * diff + spec))  + glowColor * 10;
 
 	vec3 result = vec3(1.0, 1.0, 1.0) - vec3(std::exp(-vfragColor.x * 1.0), std::exp(-vfragColor.y * 1.0), std::exp(-vfragColor.z * 1.0));
 
@@ -92,13 +92,15 @@ float ModelShader::calculateShadow(vec4 fragPos) {
 	// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
 	float closestDepth = shadowBuffer[int(shadowW * projCoords.x) + int(shadowW * (shadowH * projCoords.y))];
 	// get depth of current fragment from light's perspective
-	float currentDepth = projCoords.z;
+	float currentDepth = projCoords.z * 2000;
 	// calculate bias (based on depth map resolution and slope)
 	//vec3 normal = normalize(fs_in.Normal);
 	//vec3 lightDir = normalize(lightPos - fs_in.FragPos);
 	//float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+	if (currentDepth > 2000.0f)
+		return 0.0;
 
-	return currentDepth > 0.2 + closestDepth;
+	return currentDepth > 100 + closestDepth;
 }
 
 DepthShader::~DepthShader() {

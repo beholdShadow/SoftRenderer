@@ -5,8 +5,8 @@ RendererController::RendererController(int width, int height, std::string path, 
 					_width(width),
 					_height(height),
 					_depth(255),
-					_direction_light(-1, -1, -1),
-					_camera(1, 1, 3),
+					_direction_light(-1, -1, 0),
+					_camera(1, 1, 4),
 					_center(0, 0, 0) {
 	_model = new Model(path);
 	_modelShader = new ModelShader();
