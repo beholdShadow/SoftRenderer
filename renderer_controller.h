@@ -24,6 +24,4 @@ private:
 	vec3		    _light_dir;
 	vec3		    _camera;
 	vec3		    _center;
-
-	float		   *_zbuffer = NULL;
 };

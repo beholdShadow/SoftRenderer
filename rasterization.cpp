@@ -5,9 +5,14 @@ Rasterization::Rasterization(int width, int height, IShader* shader) {
 	this->width = width;
 	this->height = height;
 	this->shader = shader;
+	_zbuffer = new float[width * height];
+	for (int i = width * height; i--; _zbuffer[i] = std::numeric_limits<float>::max());
 }
 
 Rasterization::~Rasterization() {
+	if (_zbuffer) {
+		delete[] _zbuffer;
+	}
 }
 
 void Rasterization::viewPort(int x, int y, int w, int h) {
@@ -52,9 +57,9 @@ void Rasterization::line(int x0, int y0, int x1, int y1, TGAImage& image, TGACol
 	}
 }
 
-vec3 Rasterization::baryCentric(vec3* vertPts, vec3 P) {
-	vec3 u = vec3::cross(vec3(vertPts[2][0] - vertPts[0][0], vertPts[1][0] - vertPts[0][0], vertPts[0][0] - P[0]), vec3(vertPts[2][1] - vertPts[0][1], vertPts[1][1] - vertPts[0][1], vertPts[0][1] - P[1]));
-	/* `vertPts` and `P` has integer value as coordinates
+vec3 Rasterization::baryCentric(vec3* clipPts, vec3 P) {
+	vec3 u = vec3::cross(vec3(clipPts[2][0] - clipPts[0][0], clipPts[1][0] - clipPts[0][0], clipPts[0][0] - P[0]), vec3(clipPts[2][1] - clipPts[0][1], clipPts[1][1] - clipPts[0][1], clipPts[0][1] - P[1]));
+	/* `clipPts` and `P` has integer value as coordinates
 	   so `abs(u[2])` < 1 means `u[2]` is 0, that means
 	   triangle is degenerate, in this case return something with negative coordinates */
 	if (std::abs(u[2]) < 1e-5) return vec3(-1, 1, 1);
@@ -94,24 +99,24 @@ void Rasterization::triangle(vec2 t0, vec2 t1, vec2 t2, TGAImage& image, TGAColo
 	}
 }
 
-void Rasterization::triangle(vec3* vertPts, float* zbuffer, TGAImage& image, TGAColor color) {
-	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y) return;
+void Rasterization::triangle(vec3* clipPts, float* zbuffer, TGAImage& image, TGAColor color) {
+	if (clipPts[0].y == clipPts[1].y && clipPts[0].y == clipPts[2].y) return;
 	vec2 bboxmin(image.get_width() - 1, image.get_height() - 1);
 	vec2 bboxmax(0, 0);
 	vec2 clamp(image.get_width() - 1, image.get_height() - 1);
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 2; j++) {
-			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], vertPts[i][j]));
-			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], vertPts[i][j]));
+			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], clipPts[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], clipPts[i][j]));
 		}
 	}
 	vec3 P;
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-			vec3 bc_screen = baryCentric(vertPts, P);
+			vec3 bc_screen = baryCentric(clipPts, P);
 			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
 			P.z = 0;
-			for (int i = 0; i < 3; i++) P.z += vertPts[i][2] * bc_screen[i];
+			for (int i = 0; i < 3; i++) P.z += clipPts[i][2] * bc_screen[i];
 			if (zbuffer[int(P.x + P.y * width)] < P.z) {
 				zbuffer[int(P.x + P.y * width)] = P.z;
 				image.set(P.x, P.y, color);
@@ -120,24 +125,24 @@ void Rasterization::triangle(vec3* vertPts, float* zbuffer, TGAImage& image, TGA
 	}
 }
 
-void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zbuffer, TGAImage& image, float intensity) {
-	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y) return;
+void Rasterization::triangle(Model* model, vec3* clipPts, vec2* uvPts, float* zbuffer, TGAImage& image, float intensity) {
+	if (clipPts[0].y == clipPts[1].y && clipPts[0].y == clipPts[2].y) return;
 	vec2 bboxmin(image.get_width() - 1, image.get_height() - 1);
 	vec2 bboxmax(0, 0);
 	vec2 clamp(image.get_width() - 1, image.get_height() - 1);
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 2; j++) {
-			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], vertPts[i][j]));
-			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], vertPts[i][j]));
+			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], clipPts[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], clipPts[i][j]));
 		}
 	}
 	vec3 P;
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-			vec3 bc_screen = baryCentric(vertPts, P);
+			vec3 bc_screen = baryCentric(clipPts, P);
 			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
 			P.z = 0;
-			for (int i = 0; i < 3; i++) P.z += vertPts[i][2] * bc_screen[i];
+			for (int i = 0; i < 3; i++) P.z += clipPts[i][2] * bc_screen[i];
 			vec2 sample(0, 0);
 			for (int i = 0; i < 3; i++) {
 				sample.x += (uvPts[i] * bc_screen[i]).x;
@@ -152,10 +157,10 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 }
 
 //void Rasterization::triangle(Model* model,
-//							vec3* vertPts, vec2* uvPts,
+//							vec3* clipPts, vec2* uvPts,
 //							float* zbuffer,
 //							TGAImage& image, float* intensityPt) {
-//	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y) 
+//	if (clipPts[0].y == clipPts[1].y && clipPts[0].y == clipPts[2].y) 
 //		return;
 //
 //	vec2 bboxmin(image.get_width() - 1, image.get_height() - 1);
@@ -164,8 +169,8 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 //
 //	for (int i = 0; i < 3; i++) {
 //		for (int j = 0; j < 2; j++) {
-//			bboxmin[j] = std::max((float)0.0, std::min(bboxmin[j], vertPts[i][j]));
-//			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], vertPts[i][j]));
+//			bboxmin[j] = std::max((float)0.0, std::min(bboxmin[j], clipPts[i][j]));
+//			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], clipPts[i][j]));
 //		}
 //	}
 //
@@ -173,13 +178,13 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 //	TGAColor fragColor;
 //	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
 //		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-//			vec3 bc_screen = baryCentric(vertPts, P);
+//			vec3 bc_screen = baryCentric(clipPts, P);
 //			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
 //			P.z = 0;
 //			vec2 sample;
 //			float intensity = 0;
 //			for (int i = 0; i < 3; i++) {
-//				P.z += vertPts[i][2] * bc_screen[i];
+//				P.z += clipPts[i][2] * bc_screen[i];
 //				intensity += intensityPt[i] * bc_screen[i];
 //				sample.x += (uvPts[i] * bc_screen[i]).x;
 //				sample.y += (uvPts[i] * bc_screen[i]).y;
@@ -197,75 +202,70 @@ void Rasterization::triangle(Model* model, vec3* vertPts, vec2* uvPts, float* zb
 //	}
 //}
 
-void Rasterization::triangle(vec3* worldPts, vec3* vertPts, vec2* uvPts, vec3* normalPts, mat<3, 3>& TBN, float* zbuffer, TGAImage& image) {
-	if (vertPts[0].y == vertPts[1].y && vertPts[0].y == vertPts[2].y)
+void Rasterization::triangle(vec3* worldPts, vec3* clipPts, vec2* uvPts, vec3* normalPts, TGAImage& image) {
+	if (clipPts[0].y == clipPts[1].y && clipPts[0].y == clipPts[2].y)
 		return;
 
 	for (int i =0; i<3; i++)
-		vertPts[i] = RendererUtil::pixelCorrection(viewport * vec4(vertPts[i]));
+		clipPts[i] = RendererUtil::pixelCorrection(viewport * vec4(clipPts[i]));
+
+	vec3 P;
+	TGAColor fragColor;
+	mat<1, 3> zMat;
+	mat<3, 3> worldMat;
+	mat<2, 3> uvMat;
+	mat<3, 3> normalMat;
+	vec3 worldCoord;
+	vec2 uvCoord;
+	vec3 bnCoord;
+
+	for (int i = 0; i < 3; i++) {
+		zMat[0][i] = clipPts[i][2];
+		worldMat.set_col(i, worldPts[i]);
+		uvMat.set_col(i, uvPts[i]);
+		normalMat.set_col(i, normalPts[i]);
+	}
+
+	mat<2, 2> deltaUV = mat<2, 2>{ uvPts[1] - uvPts[0], uvPts[2] - uvPts[0] }.invert();
+	mat<2, 3> deltaPos = mat<2, 3>{ worldPts[1] - worldPts[0], worldPts[2] - worldPts[0] };
+	mat<2, 3> TB = deltaUV * deltaPos;
+	TB[0].normalize(); TB[1].normalize();
 
 	vec2 bboxmin(image.get_width() - 1, image.get_height() - 1);
 	vec2 bboxmax(0, 0);
 	vec2 clamp(image.get_width() - 1, image.get_height() - 1);
-
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 2; j++) {
-			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], vertPts[i][j]));
-			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], vertPts[i][j]));
+			bboxmin[j] = std::max(0.0, std::min(bboxmin[j], clipPts[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], clipPts[i][j]));
 		}
-	}
-
-	vec3 P;
-	TGAColor fragColor;
-	mat<1, 3> z;
-	mat<3, 3> world;
-	mat<2, 3> sample_uv;
-	mat<3, 3> normal;
-	vec3 worldCoord;
-	vec2 uvCoord;
-	vec3 bn;
-
-	for (int i = 0; i < 3; i++) {
-		z[0][i] = vertPts[i][2];
-		world.set_col(i, worldPts[i]);
-		sample_uv.set_col(i, uvPts[i]);
-		normal.set_col(i, normalPts[i]);
 	}
 
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-			vec3 bc_screen = baryCentric(vertPts, P);
-			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0)
+			vec3 bc_screen = baryCentric(clipPts, P);
+
+			P.z = (zMat * bc_screen)[0];
+
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || _zbuffer[int(P.x + P.y * width)] < P.z)
 				continue;
 
-			P.z = (z * bc_screen)[0];
-			worldCoord = world * bc_screen;
-			uvCoord = sample_uv * bc_screen;
-			bn = normal * bc_screen;
+			worldCoord = worldMat * bc_screen;
+			uvCoord = uvMat * bc_screen;
+			bnCoord = normalMat * bc_screen;
+			bnCoord.normalize();
 
-			bn.normalize();
-			TBN[0] = (TBN[0] - bn * (bn * TBN[0])).normalize();
-			TBN[1] = vec3::cross(bn, TBN[0]).normalize();
-			TBN[2] = bn;
-			TBN.transpose();
+			mat<3, 3> TBN;
+			TBN.set_col(0, (TB[0] - bnCoord * (bnCoord * TB[0])).normalize());
+			TBN.set_col(1, vec3::cross(bnCoord, TB[0]).normalize());
+			TBN.set_col(2, bnCoord);
 
-			mat<3, 3> AI = mat<3, 3>{ {worldPts[1] - worldPts[0], worldPts[2] - worldPts[0], bn} }.invert();
-			vec3 i = AI * vec3((uvPts[1] - uvPts[0]).u, (uvPts[2] - uvPts[0]).u, 0);
-			vec3 j = AI * vec3((uvPts[1] - uvPts[0]).v, (uvPts[2] - uvPts[0]).v, 0);
-			//vec3 i = AI * vec3((uvPts[1] - uvPts[0]).u, (uvPts[1] - uvPts[0]).v, 0);
-			//vec3 j = AI * vec3((uvPts[2] - uvPts[0]).u, (uvPts[2] - uvPts[0]).v, 0);
-
-			mat<3, 3> B = mat<3, 3>{ {i.normalize(), j.normalize(), bn} }.transpose();
-
-			bool discard = shader->fragment(worldCoord, uvCoord, B, fragColor);
+			bool discard = shader->fragment(worldCoord, uvCoord, TBN, fragColor);
 			if(discard)
 				continue;
 
-			//post process
-			if (zbuffer[int(P.x + P.y * width)] < P.z) {
-				zbuffer[int(P.x + P.y * width)] = P.z;
-				image.set(P.x, P.y, fragColor);
-			}
+			_zbuffer[int(P.x + P.y * width)] = P.z;
+			image.set(P.x, P.y, fragColor);	
 		}
 	}
 }

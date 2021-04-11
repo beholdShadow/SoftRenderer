@@ -16,7 +16,6 @@ struct UniformBlock {
 	vec3  viewPos;
 	sample2D diffuseTexture;
 	sample2D normalTexture;
-	sample2D tNormalTexture;
 	sample2D specTexture;
 };
 
@@ -24,10 +23,9 @@ class RendererUtil {
 public:
 	static vec3 NDC(vec4 m) {
 		vec3 ndc;
-		ndc[0] = m[0] / m[3];
-		ndc[1] = m[1] / m[3];
-		ndc[2] = m[2] / m[3];
-		//ndc[3] = 1.0f;
+		ndc.x = m[0] / m[3];
+		ndc.y = m[1] / m[3];
+		ndc.z = (m[2] / m[3] + 1.0f) * 0.5f;
 		return ndc;
 	}
 
@@ -53,6 +51,7 @@ public:
 
 	static mat<4,4> projection(float coeff) {
 		mat<4,4> projection = mat<4,4>::identity();
+		projection[2][2] = -1.f;
 		projection[3][2] = -1.f / coeff;
 		std::cerr << projection << "\n";
 		return projection;
@@ -66,12 +65,8 @@ public:
 	virtual ~IShader() = 0;
 	virtual void setUniform(UniformBlock& block) = 0;
 
-	//virtual vec3 vertex(vec3 position, vec3 normal, float* intensity) = 0;
-	//virtual bool fragment(vec2 uvCoord, float intensity, TGAColor& fragColor) = 0;
-
 	virtual vec3 vertex(vec3 position) = 0;
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) = 0;
-
 	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) = 0;
 };
 
@@ -80,9 +75,6 @@ class ModelShader:public IShader
 public:
 	virtual ~ModelShader() override;
 	virtual void setUniform(UniformBlock& block) override;
-
-	//virtual vec3 vertex(vec3 position, vec3 normal, float* intensity) override;
-	//virtual bool fragment(vec2 uvCoord, float intensity, TGAColor& fragColor) override;
 
 	virtual vec3 vertex(vec3 position) override;
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) override;
@@ -94,7 +86,6 @@ private:
 	uniform mat<4,4>			projection;
 	uniform sample2D			diffuseTexture;
 	uniform sample2D			normalTexture;
-	uniform sample2D			tNormalTexture;
 	uniform sample2D			specTexture;
 	uniform vec3				lightDir;
 	uniform vec3				viewPos;

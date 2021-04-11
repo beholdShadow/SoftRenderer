@@ -90,7 +90,7 @@ protected:
 	int height;
 	int bytespp;
 
-	bool   load_rle_data(std::ifstream &in);
+	bool load_rle_data(std::ifstream &in);
 	bool unload_rle_data(std::ofstream &out);
 public:
 	enum Format {
@@ -106,6 +106,7 @@ public:
 	bool flip_vertically();
 	bool scale(int w, int h);
 	TGAColor get(int x, int y);
+	TGAColor texture(float u, float v);
 	bool set(int x, int y, TGAColor c);
 	~TGAImage();
 	TGAImage & operator =(const TGAImage &img);
