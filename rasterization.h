@@ -6,7 +6,7 @@
 class Rasterization
 {
 public:
-	Rasterization(int width, int height, IShader* shader);
+	Rasterization(IShader* modelShader, IShader* depthShader);
 	~Rasterization();
 
 	void viewPort(int x, int y, int w, int h);
@@ -24,22 +24,23 @@ public:
 	void triangle(Model* model, vec3* clipPts, vec2* uvPts, float* zbuffer, TGAImage& image, float intensity);
 
 	// add normalPts to calculate different light intensity
-	//void triangle(Model* model, 
-	//			vec3* clipPts, vec2* uvPts,
-	//			float* zbuffer, 
-	//			TGAImage& image, float* intensityPt);
-	void triangle(vec3* worldPts, vec3* clipPts, vec2* uvPts, vec3* normalPts,
-				TGAImage& image);
+	void triangle(vec3* worldPts, vec4* clipPts, vec2* uvPts, vec3* normalPts,
+		float* zbuffer, TGAImage& image);
+
+	// calculate shadow Buffer
+	void triangle(vec4* clipPts, float* shadowBuffer, TGAImage& depth);
 
 protected:
 	vec3 baryCentric(vec3* clipPts, vec3 P);
 
 private:
-	int			width;
-	int			height;
-	IShader	  * shader;
+	IShader	  * modelShader;
+	IShader	  * depthShader;
 
-	float	  * _zbuffer = NULL;
+	double			x;
+	double			y;
+	double			width;
+	double			height;
 	mat<4, 4>   viewport;
 };
 

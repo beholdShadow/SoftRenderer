@@ -13,7 +13,8 @@ public:
 private:
 	Model		   *_model = NULL;
 	Rasterization  *_rasterize;
-	IShader		   *_shader = NULL;
+	IShader		   * _modelShader = NULL;
+	IShader		   *_depthShader = NULL;
 
 	TGAImage&		_outFrame;
 
@@ -21,7 +22,10 @@ private:
 	const int		_height;
 	const int		_depth;
 
-	vec3		    _light_dir;
+	vec3		    _direction_light;
 	vec3		    _camera;
 	vec3		    _center;
+
+	float			* _zbuffer = NULL;
+	float			* _shadowBuffer = NULL;
 };

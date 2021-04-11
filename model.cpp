@@ -69,6 +69,11 @@ Model::Model(std::string filename) : verts(), vertFaces() {
 	if (!specTexture.read_tga_file(specMapName.c_str()))
 		assert(0);
 	specTexture.flip_vertically();
+
+	std::string glowMapName = filename + "_glow.tga";
+	glowTexture.read_tga_file(glowMapName.c_str());
+	glowTexture.flip_vertically();
+
 	std::cerr << "# v# " << verts.size() << " f# " << vertFaces.size() << std::endl;
 }
 
@@ -129,4 +134,8 @@ TGAImage* Model::getTangentNormalTexture() {
 
 TGAImage* Model::getSpecularTexture() {
 	return &specTexture;
+}
+
+TGAImage* Model::getGlowTexture() {
+	return &glowTexture;
 }

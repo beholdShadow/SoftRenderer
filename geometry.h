@@ -18,6 +18,12 @@ template<int n> double operator*(const vec<n>& lhs, const vec<n>& rhs) {
 	return ret;
 }
 
+template<int n> vec<n> operator+(const vec<n>& lhs, double rhs) {
+	vec<n> ret = lhs;
+	for (int i = n; i--; ret[i] += rhs);
+	return ret;
+}
+
 template<int n> vec<n> operator+(const vec<n>& lhs, const vec<n>& rhs) {
 	vec<n> ret = lhs;
 	for (int i = n; i--; ret[i] += rhs[i]);
@@ -106,7 +112,11 @@ template<> struct vec<3> {
 	double length() const { return std::sqrt((*this) * (*this)); }
 	vec& normalize() { *this = (*this) / length(); return *this; }
 
-	double x{}, y{}, z{};
+	union
+	{
+		struct { double x, y, z; };
+		struct { double r, g, b; };
+	};
 };
 
 template<> struct vec<4> {

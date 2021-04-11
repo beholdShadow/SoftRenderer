@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include "tgaimage.h"
+#include "geometry.h"
 
 TGAImage::TGAImage() : data(NULL), width(0), height(0), bytespp(0) {
 }
@@ -248,8 +249,18 @@ bool TGAImage::unload_rle_data(std::ofstream &out) {
 	return true;
 }
 
-TGAColor TGAImage::texture(float u, float v) {
-	return get(width * u, height * v);
+vec3 TGAImage::texture(float u, float v) {
+	TGAColor color = get(width * u, height * v);
+	return vec3(color.r / 255.0, color.g / 255.0, color.b / 255.0);
+}
+
+//
+//TGAColor TGAImage::texture(float u, float v) {
+//	return get(width * u, height * v);
+//}
+vec3 TGAImage::texture(vec2 uv) {
+	TGAColor color = get(width * uv.u, height * uv.v);
+	return vec3(color.r / 255.0, color.g / 255.0, color.b / 255.0);
 }
 
 TGAColor TGAImage::get(int x, int y) {

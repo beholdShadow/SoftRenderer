@@ -2,6 +2,7 @@
 #define __IMAGE_H__
 
 #include <fstream>
+#include "geometry.h"
 
 #pragma pack(push,1)
 struct TGA_Header {
@@ -31,6 +32,15 @@ struct TGAColor {
 		unsigned int val;
 	};
 	int bytespp;
+
+	static TGAColor transform(vec3& vColor) {
+		TGAColor tga;
+		tga.r = std::min((vColor.r * 255), 255.0);
+		tga.g = std::min((vColor.g * 255), 255.0);
+		tga.b = std::min((vColor.b * 255), 255.0);
+
+		return tga;
+	}
 
 	TGAColor() : val(0), bytespp(1) {
 	}
@@ -76,10 +86,20 @@ struct TGAColor {
 		return *this;
 
 	}
+
 	unsigned char operator [](int idx) {
 		return raw[idx];
 	}
 
+	//TGAColor& operator +(const TGAColor& c) {
+	//	b += c.b;
+	//	g += c.g;
+	//	r += c.r;
+	//	a += c.a;
+
+	//	return *this;
+
+	//}
 };
 
 
@@ -106,7 +126,9 @@ public:
 	bool flip_vertically();
 	bool scale(int w, int h);
 	TGAColor get(int x, int y);
-	TGAColor texture(float u, float v);
+	vec3 texture(vec2 uv);
+	vec3 texture(float u, float v);
+	//TGAColor texture(float u, float v);
 	bool set(int x, int y, TGAColor c);
 	~TGAImage();
 	TGAImage & operator =(const TGAImage &img);

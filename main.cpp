@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
 		controller[0]->run();
 	}
 	else {
-		controller[0] = new RendererController(WIDTH, HEIGHT, "obj/african_head/african_head", _outFrame);
+		//controller[0] = new RendererController(WIDTH, HEIGHT, "obj/african_head/african_head", _outFrame);
+		controller[0] = new RendererController(WIDTH, HEIGHT, "obj/diablo3_pose/diablo3_pose", _outFrame);
 		controller[0]->run();
 		//controller[1] = new RendererController(WIDTH, HEIGHT, "obj/african_head/african_head_eye_inner", _outFrame);
 		//controller[2] = new RendererController(WIDTH, HEIGHT, "obj/african_head/african_head_eye_outer", _outFrame);

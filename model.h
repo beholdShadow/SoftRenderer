@@ -26,18 +26,22 @@ public:
 	TGAImage* getNormalTexture();
 	TGAImage* getTangentNormalTexture();
 	TGAImage* getSpecularTexture();
+	TGAImage* getGlowTexture();
 private:
 	std::vector<vec3> verts;
-	std::vector<std::vector<int> > vertFaces;
+	std::vector<std::vector<int> >  vertFaces;
 
 	std::vector<vec2> uverts;
-	std::vector<std::vector<int> > uvFaces;
+	std::vector<std::vector<int> >  uvFaces;
 	
 	std::vector<vec3> normalverts;
-	std::vector<std::vector<int> > normalFaces;
+	std::vector<std::vector<int> >  normalFaces;
 
-	TGAImage diffuseTexture;
-	TGAImage normalTexture;
-	TGAImage tNormalTexture;
-	TGAImage specTexture;
+	TGAImage						diffuseTexture;
+	TGAImage						normalTexture;
+	TGAImage						tNormalTexture;
+	TGAImage						specTexture;
+
+	bool							glow;
+	TGAImage						glowTexture;
 };
