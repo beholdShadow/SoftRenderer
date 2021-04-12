@@ -41,6 +41,6 @@ private:
 	double			y;
 	double			width;
 	double			height;
-	mat<4, 4>   viewport;
+	mat<4, 4>		viewport;
 };
 

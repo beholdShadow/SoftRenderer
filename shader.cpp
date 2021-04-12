@@ -46,7 +46,7 @@ bool ModelShader::fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) {
 	return false;
 }
 
-bool ModelShader::fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) {
+bool ModelShader::fragment(vec3 worldCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) {
 	vec3 nColor = normalTexture->texture(uvCoord.u, uvCoord.v);
 	vec3 diffColor = diffuseTexture->texture(uvCoord.u, uvCoord.v);
 	vec3 specColor = specTexture->texture(uvCoord.u, uvCoord.v); 
@@ -61,20 +61,20 @@ bool ModelShader::fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor
 	tangentNormal = (TBN * tangentNormal.normalize()).normalize();
 
 	//float shadowFactor = 1.0f;
-	float shadowFactor = .3 + .7 * (1.0 -calculateShadow(lightSpace * embed<4>(fragCoord, 1.0f)));
+	float shadowFactor = (1.0 -calculateShadow(lightSpace * embed<4>(worldCoord, 1.0f)));
 
 	float ambient = 1 / 255.0;
 
 	double diff = std::max(0.0, tangentNormal * lightDir);
 
 	vec3 reflectDir = (tangentNormal * (tangentNormal * lightDir) * 2 - lightDir).normalize(); 
-	vec3 viewDir = (viewPos - fragCoord).normalize();
+	vec3 viewDir = (viewPos - worldCoord).normalize();
 	vec3 halfway = (viewDir + lightDir).normalize();
 
 	//double spec = pow(std::max(viewDir*reflectDir, 0.0), 5 + specColor[0] * 255);
-	double spec = pow(std::max(halfway * tangentNormal, 0.0), 2 + specColor.r * 255);
+	double spec = pow(std::max(halfway * tangentNormal, 0.0), 5 + specColor.r * 255);
 
-	vec3 vfragColor = diffColor * (ambient + shadowFactor * (1.0 * diff + spec))  + glowColor * 10;
+	vec3 vfragColor = diffColor * (ambient + shadowFactor * (2 * diff + 2 * spec))  + glowColor * 20;
 
 	vec3 result = vec3(1.0, 1.0, 1.0) - vec3(std::exp(-vfragColor.x * 1.0), std::exp(-vfragColor.y * 1.0), std::exp(-vfragColor.z * 1.0));
 
@@ -86,21 +86,24 @@ bool ModelShader::fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor
 float ModelShader::calculateShadow(vec4 fragPos) {
 	vec3 projCoords = proj<3>(fragPos / fragPos.w);
 	// transform to [0,1] range
-	projCoords = projCoords * 0.5 + 0.5;
-	projCoords.x = std::max(0.0, std::min(projCoords.x, 1.0));
-	projCoords.y = std::max(0.0, std::min(projCoords.y, 1.0));
+	projCoords.x = std::max(0.0, std::min(1.0 * shadowW, projCoords.x));
+	projCoords.y = std::max(0.0, std::min(1.0 * shadowH, projCoords.y));
 	// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-	float closestDepth = shadowBuffer[int(shadowW * projCoords.x) + int(shadowW * (shadowH * projCoords.y))];
+	float closestDepth = shadowBuffer[int(projCoords.x + shadowW * projCoords.y)];
 	// get depth of current fragment from light's perspective
-	float currentDepth = projCoords.z * 2000;
+	float currentDepth = projCoords.z;
 	// calculate bias (based on depth map resolution and slope)
 	//vec3 normal = normalize(fs_in.Normal);
 	//vec3 lightDir = normalize(lightPos - fs_in.FragPos);
 	//float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-	if (currentDepth > 2000.0f)
+	if (currentDepth > 1.0f)
 		return 0.0;
 
-	return currentDepth > 100 + closestDepth;
+	if (closestDepth > 10.0) {
+		return 1.0;
+	}
+
+	return currentDepth > 0.05 + closestDepth;
 }
 
 DepthShader::~DepthShader() {

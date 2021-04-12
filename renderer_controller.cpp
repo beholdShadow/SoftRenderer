@@ -13,9 +13,9 @@ RendererController::RendererController(int width, int height, std::string path, 
 	_depthShader = new DepthShader();
 	_rasterize = new Rasterization(_modelShader, _depthShader);
 	_zbuffer = new float[width * height];
-	_shadowBuffer = new float[4 * width * height];
+	_shadowBuffer = new float[width * height];
 	for (int i = width * height; i--; _zbuffer[i] = std::numeric_limits<float>::max());
-	for (int i = 4 * width * height; i--; _shadowBuffer[i] = std::numeric_limits<float>::max());
+	for (int i = width * height; i--; _shadowBuffer[i] = std::numeric_limits<float>::max());
 }
 
 RendererController::~RendererController() {
@@ -61,17 +61,23 @@ void RendererController::run() {
 	depthBlock.view = RendererUtil::lookat(_direction_light * (-1.0f), _center, vec3(0.0, 1.0, 0.0));
 	depthBlock.projection = RendererUtil::projection(0);
 
-	modelBlock.lightSpace = depthBlock.projection * depthBlock.view;
+	mat<4, 4> viewport = mat<4, 4>::identity();
+	viewport[0][3] = _width / 2.f;
+	viewport[1][3] = _height / 2.f;
+	viewport[0][0] = _width / 2.f;
+	viewport[1][1] = _height / 2.f;
+
+	modelBlock.lightSpace = viewport * depthBlock.projection * depthBlock.view;
 	modelBlock.shadowBuffer = _shadowBuffer;
-	modelBlock.shadowW = 2 * _width -1;
-	modelBlock.shadowH = 2 * _height -1;
+	modelBlock.shadowW = _width;
+	modelBlock.shadowH = _height;
 
 	_modelShader->setUniform(modelBlock);
 	_depthShader->setUniform(depthBlock);
 
-	_rasterize->viewPort(0, 0, 2*_width, 2*_height);
+	_rasterize->viewPort(0, 0, _width, _height);
 
-	TGAImage depthTga(2 * _width, 2 * _height, TGAImage::RGB);
+	TGAImage depthTga(_width, _height, TGAImage::RGB);
 
 	for (int i = 0; i < _model->nfaces(); i++) {
 		std::vector<int> vertFace = _model->vertFace(i);

@@ -63,7 +63,7 @@ public:
 	virtual vec4 vertex(vec3 position) = 0;
 	virtual bool fragment() = 0;
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) = 0;
-	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) = 0;
+	virtual bool fragment(vec3 worldCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) = 0;
 };
 
 class ModelShader:public IShader
@@ -75,7 +75,7 @@ public:
 	virtual vec4 vertex(vec3 position) override;
 	virtual bool fragment() override { return false; }
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) override;
-	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) override;
+	virtual bool fragment(vec3 worldCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) override;
 
 protected:
 	float calculateShadow(vec4 fragPosLightSpace);
@@ -108,7 +108,7 @@ public:
 	virtual vec4 vertex(vec3 position) override;
 	virtual bool fragment() override { return false; }
 	virtual bool fragment(vec2 uvCoord, vec3 normal, TGAColor& fragColor) override { return false; }
-	virtual bool fragment(vec3 fragCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) override { return false; }
+	virtual bool fragment(vec3 worldCoord, vec2 uvCoord, mat<3, 3> TBN, TGAColor& fragColor) override { return false; }
 
 private:
 	uniform mat<4, 4>			model;
